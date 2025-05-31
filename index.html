@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond Information Exchange: Fine-Tuning LLMs for Metadiscourse Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #3D5A80 0%, #293241 100%);
+            color: #293241;
+            overflow: hidden;
+        }
+
+        .slideshow-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .slide {
+            display: none;
+            width: 95%;
+            max-width: 1200px;
+            height: 85vh;
+            background: rgba(224, 251, 252, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(41, 50, 65, 0.15);
+            animation: slideIn 0.5s ease-in-out;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: clamp(1.5em, 5vw, 2.5em);
+            color: #3D5A80;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(45deg, #3D5A80, #98C1D9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: clamp(1.2em, 4vw, 2em);
+            color: #293241;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #3D5A80;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: clamp(1.1em, 3vw, 1.5em);
+            color: #3D5A80;
+            margin: 20px 0 15px 0;
+        }
+
+        p, li {
+            font-size: clamp(0.9em, 2.5vw, 1.1em);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            padding-left: 25px;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #98C1D9 0%, #E0FBFC 100%);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #293241;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3D5A80, #293241);
+            color: #E0FBFC;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: clamp(1.5em, 4vw, 2.5em);
+            font-weight: bold;
+            display: block;
+        }
+
+        .methodology-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .flow-step {
+            background: rgba(152, 193, 217, 0.2);
+            border: 2px solid #3D5A80;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 5px;
+            flex: 1;
+            min-width: 140px;
+            min-height: 150px;
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            color: #3D5A80;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .flow-step::after {
+                display: block;
+            }
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 300px;
+            justify-content: center;
+        }
+
+        .btn {
+            background: rgba(61, 90, 128, 0.9);
+            color: #E0FBFC;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: clamp(14px, 3vw, 16px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            flex: 1;
+            max-width: 140px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: rgba(238, 108, 77, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(224, 251, 252, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #3D5A80;
+            font-size: clamp(12px, 2.5vw, 14px);
+        }
+
+        .author-info {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #293241;
+            font-size: clamp(0.8em, 2vw, 1em);
+        }
+
+        .problem-story, .success-box {
+            background: rgba(238, 108, 77, 0.1);
+            border-left: 5px solid #EE6C4D;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 10px 10px 0;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .success-box {
+            background: rgba(152, 193, 217, 0.1);
+            border-left: 5px solid #98C1D9;
+        }
+
+        .code-example {
+            background: #293241;
+            color: #E0FBFC;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-size: clamp(0.8em, 2vw, 0.9em);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .annotation-example {
+            background: rgba(152, 193, 217, 0.1);
+            border: 2px solid #3D5A80;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .metric-item {
+            background: rgba(152, 193, 217, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #3D5A80;
+            font-size: clamp(0.8em, 2vw, 0.9em);
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @media (max-width: 480px) {
+            .slide {
+                padding: 15px;
+                height: 90vh;
+            }
+
+            .stat-card, .flow-step, .metric-item, .problem-story, .success-box, .annotation-example {
+                min-height: auto;
+                padding: 20px;
+            }
+
+            .methodology-flow {
+                flex-direction: column;
+            }
+
+            .flow-step {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .download-section {
+            text-align: center;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(61, 90, 128, 0.1);
+            border-radius: 20px;
+            border: 2px solid #3D5A80;
+        }
+
+        .download-link {
+            display: inline-block;
+            background: #EE6C4D;
+            color: #E0FBFC;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 1.2em;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(238, 108, 77, 0.3);
+        }
+
+        .download-link:hover {
+            background: #3D5A80;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(61, 90, 128, 0.4);
+        }
+
+        .download-icon {
+            font-size: 3em;
+            color: #3D5A80;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slideshow-container">
+        <div class="slide-counter">
+            <span id="current-slide">1</span> / <span id="total-slides">13</span>
+        </div>
+
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1>Beyond Information Exchange</h1>
+            <h2 style="text-align: center; border: none; color: #3D5A80;">Fine-Tuning LLMs for Metadiscourse Control in Academic Writing</h2>
+            
+            <div class="author-info">
+                <p><strong>Javad Haditaghi</strong></p>
+                <p>Tutor: Prof. Cavalieri | Co-tutor: Prof. Bondi</p>
+                <p style="font-size: 0.9em; margin-top: 20px;">
+                    FutureData4Eu (Grant Agreement n. 101126733)<br>
+                    Co-Funded by the European Union
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <div class="highlight" style="font-size: 1.2em; padding: 15px 30px;">
+                    Bridging NLP with Academic Writing Conventions
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Overview -->
+        <div class="slide">
+            <h2>Research Overview</h2>
+            
+            <div class="methodology-flow">
+                <div class="flow-step">
+                    <h3>Dataset Creation</h3>
+                    <p>20,000 annotated sentences using Hyland's framework</p>
+                </div>
+                <div class="flow-step">
+                    <h3>Fine-Tuning</h3>
+                    <p>Supervised training with optimized parameters</p>
+                </div>
+                <div class="flow-step">
+                    <h3>Evaluation</h3>
+                    <p>Multi-metric assessment & validation</p>
+                </div>
+            </div>
+
+            <h3>Key Innovation</h3>
+            <p>First comprehensive dataset for <span class="highlight">controlled metadiscourse generation</span> in academic writing, addressing the gap between generic LLMs and discipline-specific rhetorical conventions.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">29</span>
+                    <span>Disciplines</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">20K+</span>
+                    <span>Annotations</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">200+</span>
+                    <span>Dissertations</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Problem Statement -->
+        <div class="slide">
+            <h2>Why Create a New Metadiscourse Dataset?</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h3>Current Limitations</h3>
+                    <ul>
+                        <li><strong>Lack of metadiscourse depth</strong> in existing datasets</li>
+                        <li><strong>Poor disciplinary diversity</strong> and coverage</li>
+                        <li><strong>Low inter-annotator agreement</strong> in current resources</li>
+                        <li><strong>Manual bias</strong> and ML-unfriendly formats</li>
+                        <li><strong>Missing data profiling</strong> and documentation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Our Solution</h3>
+                    <ul>
+                        <li><strong>Hyland's comprehensive framework</strong> (Interactive & Interactional)</li>
+                        <li><strong>Cross-disciplinary balance</strong> across 29 fields</li>
+                        <li><strong>Rigorous IAA protocols</strong> (Krippendorff's Alpha)</li>
+                        <li><strong>Benchmark-quality dataset</strong> for LLMs/ML/DL</li>
+                        <li><strong>Complete data profiling</strong> and documentation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h3>Goal</h3>
+                <p>Create a benchmark-quality dataset ready for LLMs, ML, DL, and academic writing tools with comprehensive metadiscourse annotations.</p>
+            </div>
+        </div>
+
+
+
+        <!-- Slide 5: Dataset Architecture -->
+        <div class="slide">
+            <h2>Corpus Compilation & Annotation Dimensions</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">29</span>
+                    <span>Disciplines</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">20K+</span>
+                    <span>Annotated Instances</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">200+</span>
+                    <span>Dissertations</span>
+                </div>
+            </div>
+
+            <h3>Annotation Dimensions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <ul>
+                        <li><strong>Sentence</strong> - Core text unit</li>
+                        <li><strong>Metadiscourse Category</strong> - Interactive/Interactional</li>
+                        <li><strong>Metadiscourse Feature</strong> - Specific markers</li>
+                        <li><strong>Section (IMRaD)</strong> - Structural context</li>
+                        <li><strong>Moves & Steps</strong> - Rhetorical patterns</li>
+                    </ul>
+                </div>
+                <div>
+                    <ul>
+                        <li><strong>Target (Hyland, 2018)</strong> - Framework alignment</li>
+                        <li><strong>Rhetorical Strength</strong> - Intensity levels</li>
+                        <li><strong>Position/Location</strong> - Paragraph context</li>
+                        <li><strong>Writer Background</strong> - Native/Non-native</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Annotation Protocol -->
+        <div class="slide">
+            <h2>Annotation Protocol & Quality Assurance</h2>
+
+            <h3>Addressing LLM Challenges</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div class="problem-story">
+                    <h4>Challenges</h4>
+                    <ul>
+                        <li><strong>Hallucination</strong> - False information generation</li>
+                        <li><strong>Stochastic Behavior</strong> - Inconsistent outputs</li>
+                    </ul>
+                </div>
+                <div class="success-box">
+                    <h4>Solution</h4>
+                    <p><strong>Rationale-driven Collaborative Few-shot Prompting with Iterative Validation Loop</strong> (Wu et al., 2025)</p>
+                </div>
+            </div>
+
+            <h3>Tools & Validation</h3>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <strong>GPT-4</strong><br>
+                    Primary annotation tool
+                </div>
+                <div class="metric-item">
+                    <strong>Manual Pilot</strong><br>
+                    Quality baseline
+                </div>
+                <div class="metric-item">
+                    <strong>Krippendorff's α</strong><br>
+                    Reliability measure
+                </div>
+                <div class="metric-item">
+                    <strong>Cohen's/Fleiss' κ</strong><br>
+                    Agreement metrics
+                </div>
+            </div>
+
+            <p><strong>Metric Selection Criteria:</strong> Choice depends on data type (nominal/ordinal/interval), number of annotators, and missing values handling.</p>
+        </div>
+
+        <!-- Slide 7: Data Profiling Framework -->
+        <div class="slide">
+            <h2>Data Profiling & Analysis Framework</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div class="metric-item" style="margin-bottom: 15px;">
+                        <h4>1. Inter-Annotator Agreement</h4>
+                        <p>Manual pilot phase using Krippendorff's Alpha, Cohen's/Fleiss' Kappa (Artstein, 2017)</p>
+                    </div>
+                    
+                    <div class="metric-item" style="margin-bottom: 15px;">
+                        <h4>2. Datasheets for Datasets</h4>
+                        <p>Technical and structural dataset dimensions (Gebru et al., 2018)</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="metric-item" style="margin-bottom: 15px;">
+                        <h4>3. Data Statements for NLP</h4>
+                        <p>Linguistic and ethical profiling (Bender & Friedman, 2018)</p>
+                    </div>
+                    
+                    <div class="metric-item" style="margin-bottom: 15px;">
+                        <h4>4. Statistical Features</h4>
+                        <p>Meta-level feature analysis (Uddin & Lu, 2024)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h3>Comprehensive Documentation</h3>
+                <p>Our dataset includes complete profiling to prevent issues like the DiseaseAlert failure, ensuring users can evaluate suitability, understand limitations, and make informed decisions about model deployment.</p>
+            </div>
+        </div>
+
+                <!-- Slide 4: The DiseaseAlert Story -->
+                <div class="slide">
+                    <h2>Why Data Profiling Matters: The DiseaseAlert Story</h2>
+        
+                    <div class="problem-story">
+                        <h3>The Problem</h3>
+                        <p><strong>Big U Hospital (US)</strong> develops DiseaseAlert - a Twitter-based disease outbreak detection system. Works perfectly locally, so they open-source it.</p>
+                        
+                        <p><strong>City Hospital (Abuja, Nigeria)</strong> installs it, expecting great results...</p>
+                        
+                        <p><strong>Result:</strong> Chaos. False positives. Useless alerts. Loss of trust.</p>
+                    </div>
+        
+                    <h3>Root Cause Analysis</h3>
+                    <p><strong>Not the code. Not localization. The dataset.</strong></p>
+                    
+                    <ul>
+                        <li>Language ID model trained only on <strong>formal US/UK English</strong></li>
+                        <li>Nigerian English tweets labeled as <strong>"not English"</strong> and discarded</li>
+                        <li><strong>No data statement</strong> documented these limitations</li>
+                        <li>No way for users to evaluate suitability or bias</li>
+                    </ul>
+        
+                    <div class="highlight" style="display: block; text-align: center; padding: 20px; margin-top: 20px; font-size: 1.2em;">
+                        Data Profiling isn't a luxury - it's a safety feature
+                    </div>
+                </div>
+
+        <!-- Slide 8: Training Pipeline -->
+        <div class="slide">
+            <h2>Training Pipeline & Process</h2>
+
+            <div class="methodology-flow">
+                <div class="flow-step">
+                    <h4>Data Preprocessing</h4>
+                    <p>Feature engineering, contextual embedding, density metrics</p>
+                </div>
+                <div class="flow-step">
+                    <h4>Model Initialization</h4>
+                    <p>RoBERTa-large? T5? GPT?</p>
+                </div>
+                <div class="flow-step">
+                    <h4>Fine-Tuning</h4>
+                    <p>Supervised training with optimized parameters</p>
+                </div>
+                <div class="flow-step">
+                    <h4>Validation</h4>
+                    <p>Multi-metric evaluation</p>
+                </div>
+            </div>
+
+            <h3>Feature Engineering Components</h3>
+            <ul>
+                <li><strong>Contextual Embeddings:</strong> Section + Move/Step + Position combinations</li>
+                <li><strong>Density Metrics:</strong> Metadiscourse frequency per paragraph/section</li>
+                <li><strong>Rhetorical Progression:</strong> Feature changes across text positions</li>
+            </ul>
+
+            <h3>Training Options</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="metric-item">
+                    <h4>Option 1</h4>
+                    <p>Standard fine-tuning approach</p>
+                </div>
+                <div class="metric-item">
+                    <h4>Option 2</h4>
+                    <p>Custom architecture building</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Evaluation Framework -->
+        <div class="slide">
+            <h2>Evaluation Framework</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h3>Intrinsic Evaluation</h3>
+                    <ul>
+                        <li><strong>BLEU, ROUGE, METEOR</strong> - Generation quality (T5/GPT)</li>
+                        <li><strong>BERTScore, MoverScore</strong> - Semantic similarity</li>
+                        <li><strong>Precision/Recall/F1</strong> - Feature detection accuracy</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Extrinsic Evaluation</h3>
+                    <ul>
+                        <li><strong>Native vs. Non-native surveys</strong> - User acceptability</li>
+                        <li><strong>Cross-disciplinary validation</strong> - Domain adaptation</li>
+                        <li><strong>IMRaD section performance</strong> - Context sensitivity</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Error Analysis Focus Areas</h3>
+            <div class="problem-story">
+                <ul>
+                    <li><strong>Boundary Cases:</strong> Excessive hedging, incorrect booster tone</li>
+                    <li><strong>Misplaced Features:</strong> Engagement markers in wrong contexts</li>
+                    <li><strong>Cross-disciplinary Performance:</strong> STEM vs. Humanities variations</li>
+                    <li><strong>Sectional Appropriateness:</strong> IMRaD-specific language patterns</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 10: Expected Model Capabilities -->
+        <div class="slide">
+            <h2>Anticipated Model Capabilities</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Style Adaptation</h4>
+                    <p>Hedging vs. boosting language control, engagement marker density</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Context Sensitivity</h4>
+                    <p>Section-appropriate use, discipline-aware conventions</p>
+                </div>
+            </div>
+
+            <h3>Specific Capabilities</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>Interactive Features</h4>
+                    <ul>
+                        <li>Endophoric markers placement</li>
+                        <li>Transition signal optimization</li>
+                        <li>Frame marker adaptation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Interactional Features</h4>
+                    <ul>
+                        <li>Hedging/boosting balance</li>
+                        <li>Attitude marker strength</li>
+                        <li>Engagement marker density</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h4>Native/Non-native Adaptation</h4>
+                <p>Model will adjust complexity and feature density based on writer background, supporting both native and non-native academic writers with appropriate rhetorical choices.</p>
+            </div>
+        </div>
+
+        <!-- Slide 11: Example Output -->
+        <div class="slide">
+            <h2>Expected Results: Annotated Example</h2>
+
+            <div class="annotation-example">
+                <h3>Control Settings Example</h3>
+                <div class="metric-grid">
+                    <div class="metric-item">Hedging/Boosting: 0.8</div>
+                    <div class="metric-item">Engagement: 0.3</div>
+                    <div class="metric-item">Attitude: 0.6</div>
+                    <div class="metric-item">Complexity: 0.4</div>
+                </div>
+                
+                <p><strong>Context:</strong> Scientific Results – Non-Native Friendly – Low Hedging</p>
+                <p><strong>Section:</strong> Results | <strong>Discipline:</strong> STEM</p>
+            </div>
+
+            <div class="code-example">
+                <p>The experiment <span style="color: #f39c12;">clearly</span> <em>(Booster – Interactional)</em> demonstrates an increase in efficiency under the new algorithm. <span style="color: #3498db;">As shown in Table 2</span> <em>(Endophoric Marker – Interactive)</em>, the optimized model reduces computation time by an average of 18%. This improvement <span style="color: #e74c3c;">likely</span> <em>(Hedge – Interactional)</em> results from better resource allocation. <span style="color: #9b59b6;">It is important</span> <em>(Attitude Marker – Interactional)</em> to note that no significant errors were observed during testing. The system <span style="color: #f39c12;">consistently</span> <em>(Booster – Interactional)</em> outperformed the baseline across all test cases. These results <span style="color: #f39c12;">support</span> <em>(Booster – Interactional)</em> the hypothesis presented in <span style="color: #3498db;">Section 2</span> <em>(Endophoric Marker – Interactive)</em>.</p>
+            </div>
+        </div>
+
+        <!-- Slide 12: Impact & Conclusion -->
+        <div class="slide">
+            <h2>Impacts & Innovations</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Educational Impact</h4>
+                    <p>Supports AI-assisted writing education and training</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Interdisciplinary Bridge</h4>
+                    <p>Connects NLP with genre/rhetoric studies</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Broad Coverage</h4>
+                    <p>29 disciplines with comprehensive profiling</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Quality Dataset</h4>
+                    <p>Addresses depth, profiling, and domain limitations</p>
+                </div>
+            </div>
+
+            <h3>Key Contributions</h3>
+            <div class="success-box">
+                <ul>
+                    <li><strong>First comprehensive metadiscourse dataset</strong> for controlled generation</li>
+                    <li><strong>Rigorous data profiling framework</strong> preventing deployment failures</li>
+                    <li><strong>Cross-disciplinary validation</strong> ensuring broad applicability</li>
+                    <li><strong>Native/non-native writer support</strong> for inclusive academic writing</li>
+                    <li><strong>Open benchmark</strong> for future research and tool development</li>
+                </ul>
+            </div>
+
+            <div class="author-info">
+                <p><strong>Thank you for your attention!</strong></p>
+                <p>Questions and Discussion</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Download -->
+        <div class="slide">
+            <h2>Download Presentation</h2>
+            
+            <div class="download-section">
+                <div class="download-icon">⬇️</div>
+                <h3>Get the PowerPoint Version</h3>
+                <p>Download the complete presentation in Pdf format for offline viewing and sharing.</p>
+                <a href="./presentation .pdf" class="download-link" id="pptLink">Download Slides</a>
+            </div>
+
+            <div class="author-info" style="margin-top: 60px;">
+                <p><strong>Thank you for your attention!</strong></p>
+                <p>For any questions or inquiries:</p>
+                <p style="margin-top: 15px;">
+                    <strong>Javad Haditaghi</strong><br>
+                    FutureData4Eu (Grant Agreement n. 101126733)<br>
+                    Co-Funded by the European Union
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="changeSlide(-1)">❮ Previous</button>
+        <button class="btn" onclick="changeSlide(1)">Next ❯</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        // Update the PowerPoint link
+        document.getElementById('pptLink').addEventListener('click', function(e) {
+            // You can update this to the actual download link
+            if (!this.href || this.href === '#') {
+                e.preventDefault();
+                alert('Download link will be added soon!');
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            } else if (e.key === 'ArrowRight') {
+                changeSlide(1);
+            }
+        });
+
+        // Touch/swipe navigation for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) {
+                changeSlide(1); // Swipe left, go to next slide
+            }
+            if (touchEndX > touchStartX + 50) {
+                changeSlide(-1); // Swipe right, go to previous slide
+            }
+        }
+    </script>
+</body>
+</html>
